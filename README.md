@@ -24,3 +24,13 @@ Discussion: Our study showed strong causality of CAD with manifestation of chest
 pain contrary to clinical observations suggesting pain perception of the chest at population level could be similar between the sexes. Back pain, as well as neck and 
 shoulder pain, showed a more causal effect in women compared to men. Pain perception of the heart is not majorly limited to the chest but is also reflected to other 
 regions in women at population level. Future research is required to identify what drives these differences at multiple levels. 
+
+# Usage
+
+* `pipeline.sh`: Used to perform all analyses presented in the manuscript
+* `Manhattan_plot.R`: Used to make manhattan plots of sex-stratified GWAS data
+* `MR_analysis.R`: Used to perform MR analysis
+* `Sensitivity_analyses.R`: Used to perform all presented sensitivity analyses in the manuscript
+* `Visualization_Figures.R`: Used to make Figure 2 and Figure 3 of the manuscript
+
+GWAS summary statistics are available upon request: r.methorst@lumc.nl
