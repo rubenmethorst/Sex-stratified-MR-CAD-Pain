@@ -18,7 +18,10 @@ if (length(args)==0) {
 
 # Set directory
 path <- args[1]
-path.to.data <- args[2]
+
+# For internal use only
+path <- "~/Documents/Studie/PhD/MR project"
+
 
 # Data that should be in this directory
 # - RDS Object from MR_analysis.R
@@ -87,7 +90,7 @@ cat(bold(green("Required packages are installed and loaded!\n\nLoading data...\n
 
 
 ## Load the data
-dataset <- readRDS(file = paste0(path, "/MR_results_R_0.001_fstat_10_excl_LPA_outlier.rds"))
+dataset <- readRDS(file = paste0(path, "/MR_results_R_0.001_fstat_10_excl_LPA_outlier_5e6_2023-06-29.rds"))
 
 # min F-stat in all analyses
 for (i in 1:length(dataset)){
@@ -146,7 +149,7 @@ for (i in 1:length(dataset)){
 
 # Leave-one-out plots
 # Make a single PDF file with all LOOs and titles
-pdf(file = paste0(path, "LOO_plots.pdf"), onefile = T, width = 7.0, height = 7.5)
+pdf(file = paste0(path, "/LOO_plots.pdf"), onefile = T, width = 7.0, height = 7.5)
 
 for (i in 1:length(dataset)){
   for (j in 1:length(names(dataset[[i]]))){
@@ -286,7 +289,7 @@ for (i in c(1,2)){
 
 
 # Save dataset with validation
-saveRDS(dataset, file = "MR_results_R_0.001_fstat_10_exlc_LPA_outlier_VALIDATED.rds")
+saveRDS(dataset, file = paste0(path, "MR_results_R_0.001_fstat_10_exlc_LPA_outlier_5e8_VALIDATED_", date, ".rds"))
 
 
 

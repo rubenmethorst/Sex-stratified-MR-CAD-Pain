@@ -20,6 +20,10 @@ if (length(args)==0) {
 path <- args[1]
 path.to.data <- args[2]
 
+# For internal use only
+path <- "~/Documents/Studie/PhD/MR project"
+path.to.data <- "~/Documents/Studie/PhD/MR project/Sex-stratified data/Input/"
+
 # Data that should be in this directory
 # - BOLT_LLM GWAS results of performed GWASs
 
@@ -99,7 +103,7 @@ names <- list.files(path = path.to.data, pattern = "*.txt", full.names = F)
 names <- sub(path.to.data, "", names)
 
 # Sample sizes
-Sample_size <- read_excel(paste0(path, "/Sample_size.xlsx"))
+Sample_size <- read_excel(paste0(path, "/GitHub/Sex-stratified-MR-CAD-Pain/Sample_size.xlsx"))
 
 # Read the outcome data
 datalist <- list()
@@ -126,11 +130,11 @@ for (i in 1:(length(files)-2)){
 
 # Read male CAD data
 CAD_m <- quiet(read_delim(files[11], 
-                         delim = "\t", escape_double = FALSE, 
-                         trim_ws = TRUE, show_col_types = FALSE))
+                          delim = "\t", escape_double = FALSE, 
+                          trim_ws = TRUE, show_col_types = FALSE))
 
 # Filter data
-CAD_m <- subset(CAD_m, P_BOLT_LMM < 5e-8) 
+CAD_m <- subset(CAD_m, P_BOLT_LMM < 5e-6) 
 
 # Add sample sizes
 CAD_m$case <- Sample_size$sample_size[[11]]
@@ -191,50 +195,70 @@ cat(bold(green("Data loaded, now onto MR...\n\n")))
 # 4 exposures and 2 outcomes
 
 ### MALES -------
-result_male_CAD <- list()
 ## CAD as outcome
 #read exposure data as MR input
+write.csv(as.data.frame(male_data[[6]]), file = paste0(path, "/exposure_input.csv"))
+
+exposure_data <- read_exposure_data(
+  filename = paste0(path, "/exposure_input.csv"),
+  sep = ",",
+  snp_col = "SNP",
+  beta_col = "BETA",
+  se_col = "SE",
+  effect_allele_col = "ALLELE1",
+  other_allele_col = "ALLELE0",
+  eaf_col = "A1FREQ",
+  pval_col = "P_BOLT_LMM", 
+  ncase_col = "case",
+  ncontrol_col = "control"
+)
+
+exposure_data$exposure <- names(male_data)[6]
+
+# Perform clumping
+exposure_data <- clump_data(exposure_data, clump_r2 = 0.001)
+
+# # Perform local clumping (NOT WORKING FOR NOW)
+# exposure_data <- ld_clump(dplyr::tibble(rsid=exposure_data$SNP, pval=exposure_data$pval.exposure, id=exposure_data$exposure),
+#                           clump_r2 = 0.001,
+#                           plink_bin = genetics.binaRies::get_plink_binary(), 
+#                           bfile = "~/Downloads/1kg.v3/EUR")
+
+# Filter for F-stat
+# # Standard F-statsicis
+# F   = B^2/seBeta^2
+
+# # F-stat according to Pierce et al. IJE 2011
+# # R^2: Proportion of variability
+# # n:   Sample size (22323 cases)
+# # k:   Number of IVs (33 in the end)
+B <- abs(exposure_data$beta.exposure)
+seBeta <- exposure_data$se.exposure
+k <- length(exposure_data$SNP)
+n <- exposure_data$samplesize.exposure
+rsqrd <- get_r_from_bsen(B, seBeta, n)
+
+F = (rsqrd*(n - 1 - k)) / ((1 - rsqrd)*k)
+
+# Add to data and filter for F-stat
+exposure_data$f_stat <- F
+exposure_data <- subset(exposure_data, exposure_data$f_stat > fstat)
+
+# Remove LPA outlier
+exposure_data <- subset(exposure_data, exposure_data$SNP != outlier_m)
+
+
+# Loop for MR analyses
+result_male_CAD <- list()
+
 for (i in 1:5){
   try({
-    write.csv(as.data.frame(male_data[[6]]), file = paste0(path, "exposure_input.csv"))
-    
-    exposure_data <- read_exposure_data(
-      filename = "exposure_input.csv",
-      sep = ",",
-      snp_col = "SNP",
-      beta_col = "BETA",
-      se_col = "SE",
-      effect_allele_col = "ALLELE1",
-      other_allele_col = "ALLELE0",
-      eaf_col = "A1FREQ",
-      pval_col = "P_BOLT_LMM", 
-      ncase_col = "case",
-      ncontrol_col = "control"
-    )
-    
-    exposure_data$exposure <- names(male_data)[6]
-    
-    # Perform clumping
-    exposure_data <- clump_data(exposure_data, clump_r2 = 0.001)
-    
-    # Filter for F-stat
-    B <- abs(exposure_data$beta.exposure)
-    seBeta <- exposure_data$se.exposure
-    
-    F   = B^2/seBeta^2
-    
-    exposure_data$f_stat <- F
-    exposure_data <- subset(exposure_data, exposure_data$f_stat > fstat)
-    
-    # Remove LPA outlier
-    exposure_data <- subset(exposure_data, exposure_data$SNP != outlier_m)
-    
     # Outcome data in format for MR
-    write_csv(as.data.frame(male_data[[i]]), file = paste0(path, "outcome_input.csv"))
+    write_csv(as.data.frame(male_data[[i]]), file = paste0(path, "/outcome_input.csv"))
     
     outcome_dat <- read_outcome_data(
       snps = exposure_data$SNP,
-      filename = "outcome_input.csv",
+      filename = paste0(path, "/outcome_input.csv"),
       sep = ",",
       snp_col = "SNP",
       beta_col = "BETA",
@@ -254,7 +278,7 @@ for (i in 1:5){
     exp_vs_out <- harmonise_data(
       exposure_dat = exposure_data,
       outcome_dat = outcome_dat, 
-      action = 2
+      action = 2 
     )
     
     # Steiger filter test
@@ -276,62 +300,73 @@ for (i in 1:5){
     result_male_CAD[[names(male_data)[i]]][["instruments_exp"]] <- exposure_data
     result_male_CAD[[names(male_data)[i]]][["instruments_out"]] <- outcome_dat
     
-    # Add the F-statistic
-    B <- abs(result_male_CAD[[names(male_data)[i]]][["instruments_exp"]]$beta.exposure)
-    seBeta <- result_male_CAD[[names(male_data)[i]]][["instruments_exp"]]$se.exposure
-    
-    F   = B^2/seBeta^2
-    result_male_CAD[[names(male_data)[i]]][["instruments_exp"]]$f_stat <- F
-    
   })
 }
 
 ### FEMALES
-result_female_CAD <- list()
-
 ## CAD as outcome
 #read exposure data as MR input
+write.csv(as.data.frame(female_data[[6]]), file = paste0(path, "/exposure_input.csv"))
+
+exposure_data <- read_exposure_data(
+  filename = paste0(path, "/exposure_input.csv"),
+  sep = ",",
+  snp_col = "SNP",
+  beta_col = "BETA",
+  se_col = "SE",
+  effect_allele_col = "ALLELE1",
+  other_allele_col = "ALLELE0",
+  eaf_col = "A1FREQ",
+  pval_col = "P_BOLT_LMM", 
+  ncase_col = "case",
+  ncontrol_col = "control"
+)
+
+exposure_data$exposure <- names(female_data)[6]
+
+# Perform clumping
+exposure_data <- clump_data(exposure_data, clump_r2 = 0.001)
+
+# # Perform local clumping (NOT WORKING FOR NOW)
+# exposure_data <- ld_clump(dplyr::tibble(rsid=exposure_data$SNP, pval=exposure_data$pval.exposure, id=exposure_data$exposure),
+#                           clump_r2 = 0.001,
+#                           plink_bin = genetics.binaRies::get_plink_binary(), 
+#                           bfile = "~/Downloads/1kg.v3/EUR")
+
+# Filter for F-stat
+# # Standard F-statsicis
+# F   = B^2/seBeta^2
+
+# # F-stat according to Pierce et al. IJE 2011
+# # R^2: Proportion of variability
+# # n:   Sample size (22323 cases)
+# # k:   Number of IVs (33 in the end)
+B <- abs(exposure_data$beta.exposure)
+seBeta <- exposure_data$se.exposure
+k <- length(exposure_data$SNP)
+n <- exposure_data$samplesize.exposure
+rsqrd <- get_r_from_bsen(B, seBeta, n)
+
+F = (rsqrd*(n - 1 - k)) / ((1 - rsqrd)*k)
+
+# Add to data and filter for F-stat
+exposure_data$f_stat <- F
+exposure_data <- subset(exposure_data, exposure_data$f_stat > fstat)
+
+# Remove LPA outlier
+exposure_data <- subset(exposure_data, exposure_data$SNP != outlier_f)
+
+# Loop for MR analyses
+result_female_CAD <- list()
+
 for (i in 1:5){
   try({
-    write.csv(as.data.frame(female_data[[6]]), file = paste0(path, "exposure_input.csv"))
-    
-    exposure_data <- read_exposure_data(
-      filename = "exposure_input.csv",
-      sep = ",",
-      snp_col = "SNP",
-      beta_col = "BETA",
-      se_col = "SE",
-      effect_allele_col = "ALLELE1",
-      other_allele_col = "ALLELE0",
-      eaf_col = "A1FREQ",
-      pval_col = "P_BOLT_LMM", 
-      ncase_col = "case",
-      ncontrol_col = "control"
-    )
-    
-    exposure_data$exposure <- names(female_data)[6]
-    
-    # Perform clumping
-    exposure_data <- clump_data(exposure_data, clump_r2 = 0.001)
-    
-    # Filter for F-stat
-    B <- abs(exposure_data$beta.exposure)
-    seBeta <- exposure_data$se.exposure
-    
-    F   = B^2/seBeta^2
-    
-    exposure_data$f_stat <- F
-    exposure_data <- subset(exposure_data, exposure_data$f_stat > fstat)
-    
-    # Remove LPA outlier
-    exposure_data <- subset(exposure_data, exposure_data$SNP != outlier_f)
-    
     # Outcome data in format for MR
-    write_csv(as.data.frame(female_data[[i]]), file = paste0(path, "outcome_input.csv"))
+    write_csv(as.data.frame(female_data[[i]]), file = paste0(path, "/outcome_input.csv"))
     
     outcome_dat <- read_outcome_data(
       snps = exposure_data$SNP,
-      filename = "outcome_input.csv",
+      filename = paste0(path, "/outcome_input.csv"),
       sep = ",",
       snp_col = "SNP",
       beta_col = "BETA",
@@ -372,13 +407,6 @@ for (i in 1:5){
     result_female_CAD[[names(female_data)[i]]][["instruments_exp"]] <- exposure_data
     result_female_CAD[[names(female_data)[i]]][["instruments_out"]] <- outcome_dat
     
-    # Add the F-statistic
-    B <- abs(result_female_CAD[[names(female_data)[i]]][["instruments_exp"]]$beta.exposure)
-    seBeta <- result_female_CAD[[names(female_data)[i]]][["instruments_exp"]]$se.exposure
-    
-    F   = B^2/seBeta^2
-    result_female_CAD[[names(female_data)[i]]][["instruments_exp"]]$f_stat <- F
-    
   })
 }
 
@@ -387,7 +415,7 @@ for (i in 1:5){
 dataset <- list(result_male_CAD, result_female_CAD)
 names(dataset) <- c("result_male_CAD", "result_female_CAD")
 
-saveRDS(dataset, file = "MR_results_R_0.001_fstat_10_excl_LPA_outlier.rds")
+saveRDS(dataset, file = paste0(path, "/MR_results_R_0.001_fstat_10_excl_LPA_outlier_", date, ".rds"))
 
 
 

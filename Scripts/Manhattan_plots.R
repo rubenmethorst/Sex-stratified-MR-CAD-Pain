@@ -20,6 +20,11 @@ if (length(args)==0) {
 path <- args[1]
 path.to.data <- args[2]
 
+# For internal use only
+path <- "~/Documents/Studie/PhD/MR project"
+path.to.data <- "~/Documents/Studie/PhD/MR project/Sex-stratified data/Input/"
+
+
 # Data that should be in this directory
 # - BOLT_LLM GWAS results of performed GWASs
 
@@ -74,7 +79,8 @@ quiet(
     install.packages.auto("tidyverse"),
     install.packages.auto("data.table"),
     install.packages.auto("cowplot"),
-    install.packages.auto("crayon")
+    install.packages.auto("crayon"),
+    install.packages.auto("GWASTools")
   )))
 
 cat(bold(green("Required packages are installed and loaded!\n\nLoading data...\n")))
@@ -90,8 +96,8 @@ datalist <- list()
 
 for (i in 1:(length(files)-2)){
   temp <- quiet(read_delim(files[i], 
-                     delim = "\t", escape_double = FALSE, 
-                     trim_ws = TRUE, show_col_types = FALSE))
+                           delim = "\t", escape_double = FALSE, 
+                           trim_ws = TRUE, show_col_types = FALSE))
   
   cat("Lenght of:", names[i], "\t",length(temp$SNP), "\n")
   
@@ -104,8 +110,8 @@ for (i in 1:(length(files)-2)){
 # Read the exposure data
 for (i in (length(files)-1):length(files)){
   temp <- quiet(read_delim(files[i], 
-                     delim = "\t", escape_double = FALSE, 
-                     trim_ws = TRUE, show_col_types = FALSE))
+                           delim = "\t", escape_double = FALSE, 
+                           trim_ws = TRUE, show_col_types = FALSE))
   
   cat("Lenght of:", names[i], "\t",length(temp$SNP), "\n")
   
@@ -318,6 +324,72 @@ i <- 12
 jpeg(file = paste0(path, "manhattan_plots/", names[i],"_Manhattan.jpeg"), width = 1520, height = 1080, units = "px")
 myManhattan(datalist[[names[i]]], graph.title = names[i])
 quiet(dev.off())
+
+
+# Now make some QQ plots
+cat(bold(green("Done!, now making some QQ plots...\n\n")))
+
+i <- 1
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 2
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 3
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 4
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 5
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 6
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 7
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 8
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 9
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+
+i <- 10
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 11
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
+i <- 12
+jpeg(file = paste0(path, "/gwas_plots/", names[i],"_QQ_plot.jpeg"), width = 1080, height = 1080, units = "px")
+qqPlot(datalist[[names[i]]][["P_BOLT_LMM"]])
+quiet(dev.off())
+
 
 # End of script
 timeEnd <- Sys.time()

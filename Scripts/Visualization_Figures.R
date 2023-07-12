@@ -86,7 +86,7 @@ cat(bold(green("Required packages are installed and loaded!\n\nLoading data...\n
 
 
 ## Load the data
-dataset <- readRDS(file = paste0(path, "/MR_results_R_0.001_fstat_10_exlc_LPA_outlier_VALIDATED.rds"))
+dataset <- readRDS(file = paste0(path, "/MR_results_R_0.001_fstat_10_exlc_LPA_outlier_5e6_VALIDATED_2023-06-29.rds"))
 
 # Data wrangling to get plot input
 names <- c("male_chestpain", "female_chestpain", "male_R07.4", "female_R07.4")
@@ -150,9 +150,9 @@ chest_pain_plot <- ggplot(chest_pain, aes(x = OR,
   scale_y_discrete(labels= c("Self-reported Chest Pain", "Self-reported Chest Pain", "Clinical Chest Pain", "Clinical Chest Pain")) +
   guides(colour = guide_legend(reverse=T))
 
-#chest_pain_plot
+chest_pain_plot
 
-ggsave(filename = paste0(path, "/20220926_chest_pain_plot.pdf"),
+ggsave(filename = paste0(path, "/20230703_chest_pain_plot.pdf"),
        plot = chest_pain_plot + theme(plot.title = element_blank()),
        device = "pdf",
        width = 18*2, height = 15*2,
@@ -211,7 +211,7 @@ other_pain_plot <- ggplot(other_pain, aes(x = OR,
   geom_vline(xintercept = 1, linetype="dotted") +
   geom_text(label="*", x=0.67, y=1.5, color = "darkgray", size = 6) +
   geom_text(label="n.s.", x=0.67, y=3.5, color = "darkgray", size = 6) +
-  geom_text(label="n.s.", x=0.67, y=5.5, color = "darkgray", size = 6) +
+  geom_text(label="*", x=0.67, y=5.5, color = "darkgray", size = 6) +
   geom_line(data = data.frame(x = c(0.78, 0.78), y = c(1,2)),
             aes(x = x, y = y), colour = "darkgray") +
   geom_line(data = data.frame(x = c(0.78, 0.78), y = c(3,4)),
@@ -237,9 +237,9 @@ other_pain_plot <- ggplot(other_pain, aes(x = OR,
   scale_y_discrete(labels= c(rep("Back Pain", 2), rep("Facial Pain", 2), rep("Neck and Shoulder Pain", 2))) +
   guides(colour = guide_legend(reverse=T)) + xlim(c(0.60, 2.0))
 
-#other_pain_plot
+other_pain_plot
 
-ggsave(filename = paste0(path, "/20220926_other_pain_plot.pdf"),
+ggsave(filename = paste0(path, "/20230703_other_pain_plot.pdf"),
        plot = other_pain_plot + theme(plot.title = element_blank()),
        device = "pdf",
        width = 18*2, height = 17*2,
